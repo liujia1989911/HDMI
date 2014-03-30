@@ -302,6 +302,35 @@ unsigned int *display_bmp_image()
 	return (void *)img_buf;
 }
 
+int setup_preset(int fd,  int preset)
+{
+	int ret;
+	int count;
+	struct v4l2_dv_preset presetinfo;
+	struct v4l2_dv_enum_preset enuminfo;
+	memset(&presetinfo, 0, sizeof(presetinfo)); 
+	memset(&enuminfo, 0, sizeof(enuminfo)); 
+	while((ret = ioctl(fd, VIDIOC_ENUM_DV_PRESETS, &enuminfo)) >= 0)
+	{
+		printf("preset:%d,name:%s\n",enuminfo.preset, enuminfo.name);
+		enuminfo.index++; 
+	}
+	memset(&presetinfo, 0, sizeof(presetinfo)); 
+	presetinfo.preset = preset;
+	if((ret = ioctl(fd, VIDIOC_S_DV_PRESET, &presetinfo))<0)
+	{
+		printf("VIDIOC_G_DV_PRESET error:%d\n",ret);
+		return -1;
+	}
+	memset(&presetinfo, 0, sizeof(presetinfo)); 
+	if((ret = ioctl(fd, VIDIOC_G_DV_PRESET, &presetinfo))<0)
+	{
+		printf("VIDIOC_G_DV_PRESET error:%d\n",ret);
+		return -1;
+	}
+	printf("preset:%d\n",presetinfo.preset);
+	return 0;
+}
 int main()
 {
 	int static i = 0;
@@ -311,6 +340,10 @@ int main()
 	unsigned int *bmp_buf;
 	bmp_buf = display_bmp_image();
 	open_hdmi_device();
+
+	setup_preset(hdmi_fd, 18);
+
+	//return 0;
 	hdmi_setfmt();
 	hdmi_reqbufs();
 	hdmi_qbuf(0);
